@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Superstructure M4(2) – Live Telemetry and Monitoring Validation</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Georgia', serif; font-size: 16px; line-height: 1.7; color: #1a1a1a; background: #fafaf8; }
+    code { font-family: 'Courier New', monospace; background: #f1f5f9; border: 1px solid #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+    .cover { background: #0f1923; color: #fff; padding: 80px 60px 60px; border-bottom: 4px solid #2563eb; }
+    .cover .label { font-family: 'Courier New', monospace; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: #64748b; margin-bottom: 24px; }
+    .cover h1 { font-size: 36px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; color: #f8fafc; }
+    .cover .subtitle { font-size: 17px; color: #94a3b8; margin-bottom: 40px; font-style: italic; }
+    .cover .meta { display: flex; gap: 40px; flex-wrap: wrap; }
+    .cover .meta-item { font-family: 'Courier New', monospace; font-size: 12px; }
+    .cover .meta-item span { display: block; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .cover .meta-item strong { color: #e2e8f0; font-size: 13px; }
+    .container { max-width: 860px; margin: 0 auto; padding: 60px 40px; }
+    .toc { background: #f1f5f9; border-left: 4px solid #2563eb; padding: 28px 32px; margin-bottom: 56px; border-radius: 0 6px 6px 0; }
+    .toc h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 2px; color: #64748b; margin-bottom: 16px; font-family: 'Courier New', monospace; }
+    .toc ol { list-style: none; counter-reset: toc; }
+    .toc ol li { counter-increment: toc; padding: 5px 0; }
+    .toc ol li::before { content: counter(toc, decimal-leading-zero) " "; font-family: 'Courier New', monospace; font-size: 12px; color: #94a3b8; margin-right: 8px; }
+    .toc ol li a { color: #1e40af; text-decoration: none; font-size: 14px; }
+    .section { margin-bottom: 56px; padding-bottom: 56px; border-bottom: 1px solid #e2e8f0; scroll-margin-top: 24px; }
+    .section:last-child { border-bottom: none; }
+    .section-number { font-family: 'Courier New', monospace; font-size: 12px; letter-spacing: 2px; color: #2563eb; text-transform: uppercase; margin-bottom: 8px; }
+    h2 { font-size: 26px; font-weight: 700; color: #0f172a; margin-bottom: 20px; line-height: 1.3; }
+    h3 { font-size: 18px; font-weight: 600; color: #1e293b; margin-top: 32px; margin-bottom: 12px; }
+    p { margin-bottom: 16px; color: #374151; }
+    ul, ol { margin: 12px 0 20px 24px; }
+    li { margin-bottom: 8px; color: #374151; }
+    .callout.tradeoff { background: #faf5ff; border-left: 4px solid #a855f7; padding: 20px 24px 20px 20px; border-radius: 0 6px 6px 0; margin: 24px 0; }
+    .callout.info { background: #eff6ff; border: 1px solid #bfdbfe; padding: 20px 24px; border-radius: 6px; margin: 24px 0; }
+    .callout strong { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 8px; }
+    .threshold-row { display: flex; gap: 0; margin: 4px 0; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+    .th-label { background: #1e293b; color: #f8fafc; padding: 8px 16px; font-family: 'Courier New', monospace; font-size: 12px; min-width: 300px; }
+    .th-value { background: #fff; padding: 8px 16px; font-family: 'Courier New', monospace; font-size: 13px; color: #2563eb; font-weight: bold; min-width: 120px; }
+    .th-note { background: #f8fafc; padding: 8px 16px; font-size: 13px; color: #64748b; flex: 1; }
+    .crs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+    .crs-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px 24px; }
+    .crs-card .cc-weight { font-family: 'Courier New', monospace; font-size: 32px; font-weight: 700; color: #2563eb; margin-bottom: 4px; }
+    .crs-card .cc-label { font-size: 15px; font-weight: 600; color: #0f172a; margin-bottom: 6px; }
+    .crs-card .cc-field { font-family: 'Courier New', monospace; font-size: 11px; color: #64748b; margin-bottom: 8px; }
+    .crs-card p { font-size: 13px; color: #374151; margin: 0; }
+    .validation-layer { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin: 16px 0; }
+    .vl-header { background: #1e293b; color: #f8fafc; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .vl-name { font-family: 'Courier New', monospace; font-size: 13px; font-weight: bold; }
+    .vl-layer { font-family: 'Courier New', monospace; font-size: 11px; color: #64748b; }
+    .vl-body { padding: 20px; background: #fff; }
+    .vl-body p { font-size: 14px; margin-bottom: 10px; }
+    .vl-body ul { margin: 8px 0 0 18px; font-size: 14px; }
+    .phase-list { list-style: none; margin: 0; padding: 0; }
+    .phase-list > li { display: flex; gap: 20px; margin-bottom: 0; position: relative; }
+    .phase-list > li:not(:last-child)::after { content: ''; position: absolute; left: 19px; top: 44px; bottom: -8px; width: 2px; background: #e2e8f0; }
+    .phase-num { background: #2563eb; color: #fff; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Courier New', monospace; font-size: 13px; font-weight: bold; flex-shrink: 0; margin-top: 2px; }
+    .phase-body { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; flex: 1; }
+    .phase-body h4 { margin-top: 0; font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
+    .phase-body p { margin: 0 0 10px; font-size: 14px; }
+    .phase-body ul { margin: 8px 0 0 18px; font-size: 14px; }
+    .phase-tag { display: inline-block; border-radius: 4px; padding: 3px 10px; font-family: 'Courier New', monospace; font-size: 11px; margin-top: 6px; margin-right: 4px; }
+    .phase-tag.success { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+    .phase-tag.fail { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+    .phase-tag.rollback { background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; }
+    .spec-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 20px 0; }
+    .spec-table th { background: #1e293b; color: #f8fafc; text-align: left; padding: 12px 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    .spec-table td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    .spec-table tr:nth-child(even) td { background: #f8fafc; }
+    .error-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+    .error-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; }
+    .error-card .e-code { font-family: 'Courier New', monospace; font-size: 11px; color: #991b1b; font-weight: bold; margin-bottom: 4px; }
+    .error-card .e-name { font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 4px; }
+    .error-card p { font-size: 12px; color: #64748b; margin: 0; line-height: 1.5; }
+    .schema-block { background: #0f1923; border-radius: 8px; padding: 24px; margin: 20px 0; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.9; overflow-x: auto; }
+    .schema-block .sf { color: #93c5fd; }
+    .schema-block .st { color: #6ee7b7; }
+    .schema-block .sc { color: #64748b; font-style: italic; }
+    .schema-block .sb { color: #e2e8f0; }
+    .assumption-item { border-left: 3px solid #f59e0b; padding: 12px 16px; margin: 10px 0; background: #fff; border-radius: 0 6px 6px 0; }
+    .assumption-item .a-id { font-family: 'Courier New', monospace; font-size: 11px; color: #92400e; font-weight: bold; margin-bottom: 4px; }
+    .unknown-item { border-left: 3px solid #ef4444; padding: 12px 16px; margin: 10px 0; background: #fff; border-radius: 0 6px 6px 0; }
+    .unknown-item .u-id { font-family: 'Courier New', monospace; font-size: 11px; color: #991b1b; font-weight: bold; margin-bottom: 4px; }
+    .assumption-item p, .unknown-item p { font-size: 14px; margin: 0; color: #374151; }
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; font-family: 'Courier New', monospace; text-transform: uppercase; margin-left: 8px; }
+    .badge.confirmed { background: #f0fdf4; color: #166534; border: 1px solid #86efac; }
+    .badge.open { background: #fffbeb; color: #854d0e; border: 1px solid #fcd34d; }
+    .event-list { list-style: none; margin: 0; padding: 0; }
+    .event-list li { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; align-items: flex-start; }
+    .event-tag { font-family: 'Courier New', monospace; font-size: 11px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; padding: 2px 8px; color: #1e40af; white-space: nowrap; margin-top: 2px; }
+    .event-tag.err { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+    .remediation-track { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin: 16px 0; }
+    .rt-header { background: #1e293b; color: #f8fafc; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; font-family: 'Courier New', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+    .rt-window { color: #2563eb; font-weight: bold; }
+    .rt-body { padding: 16px 20px; background: #fff; }
+    .rt-body p { font-size: 14px; margin-bottom: 8px; }
+    .rt-body ul { margin: 8px 0 0 18px; font-size: 14px; }
+    .score-complete { color: #16a34a; font-weight: bold; font-size: 14px; }
+    .gate-block { background: #0f1923; border-radius: 8px; padding: 28px 32px; margin: 28px 0; }
+    .gate-block .gate-label { font-family: 'Courier New', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #64748b; margin-bottom: 12px; }
+    .gate-block h3 { color: #f8fafc; margin-top: 0; font-size: 17px; }
+    .gate-block p { color: #94a3b8; font-size: 14px; margin-bottom: 0; }
+    .assurance { background: #0f1923; color: #e2e8f0; border-radius: 8px; padding: 32px; margin: 32px 0; }
+    .assurance .a-label { font-family: 'Courier New', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #64748b; margin-bottom: 16px; }
+    .assurance p { color: #cbd5e1; font-size: 15px; margin-bottom: 12px; }
+    .assurance p:last-child { margin-bottom: 0; }
+    .formula-block { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin: 20px 0; text-align: center; }
+    .formula-block .formula { font-family: 'Courier New', monospace; font-size: 18px; color: #0f172a; font-weight: bold; margin-bottom: 12px; }
+    .formula-block .formula-sub { font-size: 13px; color: #64748b; }
+    .changelog-row { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+    .cl-ver { font-family: 'Courier New', monospace; font-size: 12px; color: #2563eb; min-width: 40px; font-weight: bold; }
+    .cl-date { font-family: 'Courier New', monospace; font-size: 12px; color: #94a3b8; min-width: 100px; }
+    .cl-note { color: #374151; font-size: 13px; line-height: 1.6; }
+    .footer-bar { background: #0f1923; color: #64748b; text-align: center; padding: 32px; font-family: 'Courier New', monospace; font-size: 12px; letter-spacing: 1px; }
+    @media (max-width: 640px) { .cover { padding: 40px 24px; } .container { padding: 40px 20px; } .crs-grid, .error-grid { grid-template-columns: 1fr; } .threshold-row { flex-direction: column; } }
+  </style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="label">Superstructure · Mission 4 · Pilot Execution · M4(2)</div>
+  <h1>Live Telemetry and Monitoring Validation</h1>
+  <div class="subtitle">Validation framework confirming OCP telemetry ingestion, Composite Routing Score calculation, and routing weight logic against real operator data during the founding cohort pilot</div>
+  <div class="meta">
+    <div class="meta-item"><span>Version</span><strong>1.0</strong></div>
+    <div class="meta-item"><span>Network</span><strong>Post Fiat (PFT)</strong></div>
+    <div class="meta-item"><span>Depends On</span><strong>M3 Validator Routing Logic · M3 Operator Integration Spec · M4(1) Cohort Onboarding Audit</strong></div>
+    <div class="meta-item"><span>Owner</span><strong>Superstructure Operations</strong></div>
+    <div class="meta-item"><span>Classification</span><strong>Public</strong></div>
+    <div class="meta-item"><span>Last Updated</span><strong>March 2026</strong></div>
+  </div>
+</div>
+
+<div class="container">
+
+<div class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#purpose">Purpose and Scope</a></li>
+    <li><a href="#assumptions">Assumption Registry and Open Questions</a></li>
+    <li><a href="#validation-model">Three-Layer Validation Model</a></li>
+    <li><a href="#step1">Step 1 — OCP Telemetry Ingestion Requirements</a></li>
+    <li><a href="#step2">Step 2 — CRS Calculation Mapping and Validation</a></li>
+    <li><a href="#step3">Step 3 — Routing Weight Adjustment Mechanism</a></li>
+    <li><a href="#step4">Step 4 — Explicit Pass/Fail Criteria</a></li>
+    <li><a href="#step5">Step 5 — Remediation Process for Failing Operators</a></li>
+    <li><a href="#statemachine">Validation State Machine</a></li>
+    <li><a href="#errors">Error Codes and Typed Failure Reasons</a></li>
+    <li><a href="#schemas">Validation Record Schemas</a></li>
+    <li><a href="#events">Validation Event Registry</a></li>
+    <li><a href="#verification">Completion Verification</a></li>
+    <li><a href="#changelog">Change Log</a></li>
+  </ol>
+</div>
+
+<!-- 01 PURPOSE -->
+<div class="section" id="purpose">
+  <div class="section-number">Section 01</div>
+  <h2>Purpose and Scope</h2>
+  <p>M3 defined how the OCP should work. This document validates that it actually works against real operator data during the founding cohort pilot. The distinction matters. A specification describes intended behavior; a validation framework confirms that intended behavior is observed in production conditions with live operators, live telemetry payloads, and live routing decisions.</p>
+  <p>Three things are validated: that the OCP correctly ingests telemetry from each live operator, that the CRS calculation pipeline produces scores that match independently verified calculations, and that routing weight assignments comply with policy bounds and concentration limits. These three layers can fail independently. An operator whose telemetry ingestion is clean may still produce a CRS calculation mismatch if the OCP's component weighting is misconfigured. An operator whose CRS is correct may still receive a non-compliant routing weight if policy bounds are not enforced correctly. The validation framework therefore runs all three layers in sequence and requires each to pass independently.</p>
+  <p>This document covers the live validation phase only. Pre-pilot onboarding checks are covered in M4(1) Cohort Onboarding and Technical Readiness Audit. Post-pilot ongoing monitoring is outside this document's scope.</p>
+
+  <div class="callout tradeoff">
+    <strong>Design Decision — Sequential vs Parallel Validation Layers</strong>
+    Running validation layers in sequence rather than in parallel means a telemetry ingestion failure blocks CRS validation, and a CRS failure blocks routing weight validation. This creates a dependency chain that could slow validation for operators with early-layer failures. The alternative — running all three layers simultaneously — would generate misleading results: a CRS calculated from malformed telemetry would fail for the wrong reason. Sequential execution ensures each failure is diagnosed at the correct layer, which produces more actionable remediation guidance. The cost is validation time. The benefit is diagnostic precision.
+  </div>
+</div>
+
+<!-- 02 ASSUMPTIONS -->
+<div class="section" id="assumptions">
+  <div class="section-number">Section 02</div>
+  <h2>Assumption Registry and Open Questions</h2>
+
+  <div class="assumption-item">
+    <div class="a-id">ASSUMPTION-01 <span class="badge confirmed">Confirmed</span></div>
+    <p>CRS component weights are fixed at the values established in M3: Verified Inference Score 40%, uptime rate 30%, p95 latency 20%, telemetry freshness 10%. Validation uses these weights for independent recalculation. Any deviation in the OCP's applied weights from these values constitutes a CRS calculation failure.</p>
+  </div>
+  <div class="assumption-item">
+    <div class="a-id">ASSUMPTION-02 <span class="badge confirmed">Confirmed</span></div>
+    <p>Independent CRS recalculation is performed by Superstructure operations using the raw telemetry payload data logged by the OCP ingestion system. The recalculation tool is a deterministic script applying the published formula — not a manual calculation. This ensures the independent calculation is repeatable and auditable.</p>
+  </div>
+  <div class="assumption-item">
+    <div class="a-id">ASSUMPTION-03 <span class="badge confirmed">Confirmed</span></div>
+    <p>The OCP recalculates CRS on a 60-second cycle. Validation checks are run against a minimum of five consecutive scoring cycles (5 minutes of live data) to confirm scoring stability, not just a single calculation pass.</p>
+  </div>
+  <div class="assumption-item">
+    <div class="a-id">ASSUMPTION-04 <span class="badge open">Open</span></div>
+    <p>The OCP exposes a query endpoint that allows Superstructure operations to retrieve the raw input values used for any given CRS calculation, not just the final score. Without this, independent recalculation must rely on the telemetry payload log rather than the OCP's actual inputs — which would not detect cases where the OCP read the correct payload but applied the wrong field mapping internally. Confirmation of this endpoint's availability is pending from Post Fiat core.</p>
+  </div>
+  <div class="unknown-item">
+    <div class="u-id">UNKNOWN-01 — Routing weight recalculation interval during pilot</div>
+    <p>M3 defines routing weight as derived from CRS on each 60-second scoring cycle. Whether the pilot uses the same interval or a longer recalculation period for stability during the initial live phase is not confirmed. This validation spec uses the 60-second interval as the baseline.</p>
+  </div>
+</div>
+
+<!-- 03 VALIDATION MODEL -->
+<div class="section" id="validation-model">
+  <div class="section-number">Section 03</div>
+  <h2>Three-Layer Validation Model</h2>
+  <p>Every operator in the founding cohort pilot must clear all three validation layers. The layers run in sequence. Layer 1 must pass before Layer 2 begins. Layer 2 must pass before Layer 3 begins.</p>
+
+  <div class="validation-layer">
+    <div class="vl-header">
+      <span class="vl-name">Layer 1 — Telemetry Ingestion</span>
+      <span class="vl-layer">OCP receiving correct data from operator</span>
+    </div>
+    <div class="vl-body">
+      <p>Validates that the OCP is receiving telemetry payloads from this operator at the correct interval, that payloads pass schema validation, that signatures are valid, and that no delivery gaps exceed the consecutive miss threshold. A failure at this layer means the OCP cannot produce a trustworthy CRS for this operator — routing decisions based on stale or malformed data are unreliable.</p>
+    </div>
+  </div>
+
+  <div class="validation-layer">
+    <div class="vl-header">
+      <span class="vl-name">Layer 2 — CRS Calculation</span>
+      <span class="vl-layer">OCP scoring pipeline producing correct output</span>
+    </div>
+    <div class="vl-body">
+      <p>Validates that the OCP's CRS output matches an independently computed score derived from the same raw telemetry inputs. Passes only if the delta between OCP score and independent score is within 2 points across five consecutive scoring cycles. A failure at this layer means the OCP's scoring pipeline has a configuration error — wrong weights, wrong field mapping, or stale input data — that would produce incorrect routing decisions even if ingestion is clean.</p>
+    </div>
+  </div>
+
+  <div class="validation-layer">
+    <div class="vl-header">
+      <span class="vl-name">Layer 3 — Routing Weight Assignment</span>
+      <span class="vl-layer">OCP routing logic compliant with policy and concentration limits</span>
+    </div>
+    <div class="vl-body">
+      <p>Validates that the routing weight assigned to this operator falls within the policy bounds specified in the institution's allocation policy, that the weight responds correctly to CRS changes, and that no concentration limit violations are produced. A failure at this layer means the OCP's weight assignment logic is not enforcing the constraints that protect institutional allocations from operator concentration risk.</p>
+    </div>
+  </div>
+
+  <div class="gate-block">
+    <div class="gate-label">Validation Complete</div>
+    <h3>All Three Layers Cleared — Operator Enters VALIDATED State</h3>
+    <p>Middleware fires <code>OPERATOR_TELEMETRY_VALIDATION_COMPLETE</code>. Operator is confirmed as a live, scored participant in the founding cohort. Institutional routing decisions for this operator are trusted as OCP-verified.</p>
+  </div>
+</div>
+
+<!-- 04 STEP 1 — TELEMETRY INGESTION -->
+<div class="section" id="step1">
+  <div class="section-number">Step 01 — Layer 1</div>
+  <h2>OCP Telemetry Ingestion Requirements</h2>
+  <p>Layer 1 validation confirms the OCP is receiving live telemetry from each pilot operator and that received payloads meet the quality requirements defined in M3. Validation runs against a 4-hour live observation window — long enough to capture normal operational variance but short enough to complete validation before the first institutional routing decisions are made.</p>
+
+  <h3>Threshold Reference — Layer 1</h3>
+  <div class="threshold-row"><div class="th-label">Live observation window</div><div class="th-value">4 hours</div><div class="th-note">Minimum continuous observation before Layer 1 validation assessment</div></div>
+  <div class="threshold-row"><div class="th-label">Expected polling interval</div><div class="th-value">30 seconds</div><div class="th-note">Per M3 Operator Integration Spec; OCP expects one payload per operator per 30-second interval</div></div>
+  <div class="threshold-row"><div class="th-label">Minimum delivery rate (pass)</div><div class="th-value">≥ 98%</div><div class="th-note">Of expected 30-second polls during 4-hour window (480 expected, 470 minimum)</div></div>
+  <div class="threshold-row"><div class="th-label">Maximum consecutive missed polls</div><div class="th-value">3</div><div class="th-note">Four or more consecutive missed polls = ERR_TELEMETRY_GAP regardless of overall delivery rate</div></div>
+  <div class="threshold-row"><div class="th-label">Schema validation pass rate</div><div class="th-value">100%</div><div class="th-note">Every received payload must pass full schema validation; any malformed payload is a fail</div></div>
+  <div class="threshold-row"><div class="th-label">Signature validation pass rate</div><div class="th-value">100%</div><div class="th-note">Every payload must carry a valid Ed25519 telemetrySignature</div></div>
+  <div class="threshold-row"><div class="th-label">Payload timestamp drift maximum</div><div class="th-value">±5 seconds</div><div class="th-note">Payload timestamp must be within 5 seconds of OCP receipt time; larger drift indicates clock sync issues</div></div>
+  <div class="threshold-row"><div class="th-label">OCP ingestion latency (p95)</div><div class="th-value">≤ 500ms</div><div class="th-note">From payload transmission to OCP confirmed ingestion; confirms OCP pipeline is not introducing processing delays</div></div>
+  <br>
+
+  <h3>Required Telemetry Fields — Live Validation Mapping</h3>
+  <p>Each received payload must contain all required fields. Layer 1 validation confirms not only that fields are present but that values are within operationally plausible ranges — a payload with <code>uptimeRate24h: 0.00</code> on a live validator passes schema validation but triggers a range plausibility flag.</p>
+  <table class="spec-table">
+    <thead><tr><th>Field</th><th>Type</th><th>Required Range</th><th>Layer Used In</th></tr></thead>
+    <tbody>
+      <tr><td><code>operatorId</code></td><td>string</td><td>Must match registered cohort operator ID</td><td>Layer 1</td></tr>
+      <tr><td><code>validatorPubKey</code></td><td>string</td><td>Must match key on file from M4(1) audit</td><td>Layer 1</td></tr>
+      <tr><td><code>timestamp</code></td><td>ISO 8601 UTC</td><td>Within ±5 seconds of OCP receipt time</td><td>Layer 1</td></tr>
+      <tr><td><code>uptimeRate24h</code></td><td>float</td><td>0.00–1.00; plausibility flag if below 0.90 on live validator</td><td>Layer 1, Layer 2</td></tr>
+      <tr><td><code>latencyP95Ms</code></td><td>integer</td><td>0–2000ms; plausibility flag above 1500ms</td><td>Layer 1, Layer 2</td></tr>
+      <tr><td><code>verifiedInferenceScore</code></td><td>float</td><td>0.00–1.00</td><td>Layer 1, Layer 2</td></tr>
+      <tr><td><code>ledgerParticipationRate</code></td><td>float</td><td>0.00–1.00</td><td>Layer 1, Layer 2</td></tr>
+      <tr><td><code>allocationWeightCurrent</code></td><td>float</td><td>Must match OCP routing weight assignment; mismatch flags Layer 3</td><td>Layer 3</td></tr>
+      <tr><td><code>maintenanceDeclared</code></td><td>boolean</td><td>If true, operator is in declared maintenance window; routing weight floor applies</td><td>Layer 3</td></tr>
+      <tr><td><code>telemetrySignature</code></td><td>Ed25519 signature</td><td>Valid signature over payload hash using registered operator key</td><td>Layer 1</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout tradeoff">
+    <strong>Design Decision — 4-Hour Window vs 72-Hour M4(1) Soak</strong>
+    The M4(1) onboarding audit used a 72-hour soak period to establish a telemetry baseline before Gate 1 checks ran. This validation uses a 4-hour window because operators have already cleared the 72-hour soak. The live validation window is checking a different question: not whether the operator can sustain telemetry delivery over time, but whether the OCP is correctly ingesting and processing that telemetry in the live pilot environment. Four hours captures enough scoring cycles (240 cycles at 60-second CRS recalculation) to confirm pipeline stability without delaying institutional routing activation.
+  </div>
+</div>
+
+<!-- 05 STEP 2 — CRS CALCULATION -->
+<div class="section" id="step2">
+  <div class="section-number">Step 02 — Layer 2</div>
+  <h2>CRS Calculation Mapping and Validation</h2>
+  <p>Layer 2 validates that the OCP's CRS calculation pipeline produces correct output. A correctly operating OCP will produce a CRS that matches an independently computed score derived from the same raw telemetry inputs within the defined tolerance. A mismatch indicates a pipeline error that must be diagnosed and resolved before live routing decisions can be trusted.</p>
+
+  <h3>CRS Formula — Published Component Weights</h3>
+  <div class="formula-block">
+    <div class="formula">CRS = (VI_score × 0.40) + (uptime_rate × 0.30) + (latency_score × 0.20) + (freshness_score × 0.10)</div>
+    <div class="formula-sub">All component inputs normalized to 0.00–1.00 scale before weighting. Final CRS expressed as 0–100 integer (multiply result by 100).</div>
+  </div>
+
+  <h3>Component Mapping — Telemetry Field to CRS Input</h3>
+  <div class="crs-grid">
+    <div class="crs-card">
+      <div class="cc-weight">40%</div>
+      <div class="cc-label">Verified Inference Score</div>
+      <div class="cc-field">Source field: <code>verifiedInferenceScore</code></div>
+      <p>Used directly as normalized input (already 0.00–1.00). Highest weight component — reflects operator's contribution quality to the network beyond uptime. A new operator with no scored periods defaults to the VI score floor defined by Post Fiat core (see UNKNOWN-01 in M4(1)).</p>
+    </div>
+    <div class="crs-card">
+      <div class="cc-weight">30%</div>
+      <div class="cc-label">Uptime Rate</div>
+      <div class="cc-field">Source field: <code>uptimeRate24h</code></div>
+      <p>Used directly as normalized input. Reflects 24-hour rolling uptime. Validation checks that the OCP uses the rolling 24-hour value, not an instantaneous point-in-time reading, which would produce artificially volatile CRS scores.</p>
+    </div>
+    <div class="crs-card">
+      <div class="cc-weight">20%</div>
+      <div class="cc-label">Latency Score</div>
+      <div class="cc-field">Source field: <code>latencyP95Ms</code> (transformed)</div>
+      <p>Derived from p95 latency via inversion: <code>latency_score = max(0, (400 - latencyP95Ms) / 400)</code>. A p95 latency of 0ms produces a latency score of 1.00; a p95 latency of 400ms produces 0.00; values above 400ms are floored at 0.00. Validation confirms the OCP applies this transformation, not a raw latency comparison.</p>
+    </div>
+    <div class="crs-card">
+      <div class="cc-weight">10%</div>
+      <div class="cc-label">Telemetry Freshness</div>
+      <div class="cc-field">Source field: <code>timestamp</code> (derived)</div>
+      <p>Derived from payload age at time of CRS calculation: <code>freshness_score = max(0, (30 - age_seconds) / 30)</code>. A payload received at exactly 30 seconds old produces 0.00; a payload received instantly produces 1.00. Validation confirms the OCP calculates freshness at scoring time, not at ingestion time.</p>
+    </div>
+  </div>
+
+  <h3>Layer 2 Validation Procedure</h3>
+  <ul class="phase-list">
+    <li>
+      <div class="phase-num">1</div>
+      <div class="phase-body">
+        <h4>Retrieve Raw Telemetry Inputs</h4>
+        <p>For each of five consecutive 60-second scoring cycles, retrieve the raw field values that the OCP used as inputs: <code>verifiedInferenceScore</code>, <code>uptimeRate24h</code>, <code>latencyP95Ms</code>, and payload <code>timestamp</code>. If ASSUMPTION-04 is confirmed (OCP exposes a query endpoint), retrieve directly from OCP. Otherwise, use the OCP ingestion log as the source of record.</p>
+        <div class="phase-tag success">Proceed: inputs retrieved for all five cycles</div>
+        <div class="phase-tag fail">Fail: ERR_VALIDATION_INPUT_UNAVAILABLE — cannot retrieve OCP inputs; escalate to Superstructure operations review</div>
+      </div>
+    </li>
+    <li>
+      <div class="phase-num">2</div>
+      <div class="phase-body">
+        <h4>Run Independent CRS Calculation</h4>
+        <p>Apply the published formula to each set of retrieved inputs using the Superstructure operations recalculation script. The script applies component transformations (latency inversion, freshness derivation) identically to the OCP's documented implementation. Produces an expected CRS value for each cycle.</p>
+        <div class="phase-tag success">Proceed: independent scores calculated for all five cycles</div>
+      </div>
+    </li>
+    <li>
+      <div class="phase-num">3</div>
+      <div class="phase-body">
+        <h4>Compare OCP Output vs Independent Calculation</h4>
+        <p>For each cycle, compute the delta between OCP CRS output and independent calculation. A delta of 0–2 points is within tolerance (rounding differences in floating-point arithmetic). A delta above 2 points on any single cycle triggers <code>ERR_CRS_CALCULATION_MISMATCH</code>. A consistent delta of the same magnitude across all five cycles suggests a systematic weight misconfiguration rather than a transient error.</p>
+        <div class="phase-tag success">Pass: delta ≤ 2 points on all five cycles</div>
+        <div class="phase-tag fail">Fail: ERR_CRS_CALCULATION_MISMATCH — delta > 2 on any cycle</div>
+      </div>
+    </li>
+    <li>
+      <div class="phase-num">4</div>
+      <div class="phase-body">
+        <h4>Diagnose Mismatch Type (on failure only)</h4>
+        <p>Determine which component is producing the mismatch by recalculating each component independently. A weight mismatch (OCP applying wrong percentage weights) will show consistent proportional error across all operators. A field mapping error (OCP reading the wrong telemetry field for a component) will show component-specific error that varies by operator. A stale input error (OCP using payload from a prior cycle) will show temporal drift in the mismatch.</p>
+        <div class="phase-tag rollback">Mismatch type determines remediation path — see Step 5</div>
+      </div>
+    </li>
+  </ul>
+
+  <h3>Threshold Reference — Layer 2</h3>
+  <div class="threshold-row"><div class="th-label">Validation scoring cycles required</div><div class="th-value">5 cycles</div><div class="th-note">Five consecutive 60-second cycles; all must pass for Layer 2 clear</div></div>
+  <div class="threshold-row"><div class="th-label">CRS delta tolerance (pass threshold)</div><div class="th-value">≤ 2 points</div><div class="th-note">Delta between OCP output and independent calculation per cycle</div></div>
+  <div class="threshold-row"><div class="th-label">VI score weight</div><div class="th-value">40%</div><div class="th-note">Applied to verifiedInferenceScore (0.00–1.00 direct input)</div></div>
+  <div class="threshold-row"><div class="th-label">Uptime weight</div><div class="th-value">30%</div><div class="th-note">Applied to uptimeRate24h (0.00–1.00 direct input, 24-hour rolling)</div></div>
+  <div class="threshold-row"><div class="th-label">Latency weight</div><div class="th-value">20%</div><div class="th-note">Applied to latency_score = max(0, (400 - latencyP95Ms) / 400)</div></div>
+  <div class="threshold-row"><div class="th-label">Freshness weight</div><div class="th-value">10%</div><div class="th-note">Applied to freshness_score = max(0, (30 - age_seconds) / 30)</div></div>
+  <div class="threshold-row"><div class="th-label">Latency floor (score = 0.00)</div><div class="th-value">400ms</div><div class="th-note">p95 latency at or above 400ms produces latency score of 0.00</div></div>
+  <div class="threshold-row"><div class="th-label">Freshness floor (score = 0.00)</div><div class="th-value">30 seconds</div><div class="th-note">Payload age at or above 30 seconds at scoring time produces freshness score of 0.00</div></div>
+</div>
+
+<!-- 06 STEP 3 — ROUTING WEIGHT -->
+<div class="section" id="step3">
+  <div class="section-number">Step 03 — Layer 3</div>
+  <h2>Routing Weight Adjustment Mechanism</h2>
+  <p>Layer 3 validates that the OCP correctly translates CRS scores into routing weights — that weights fall within policy bounds, respond appropriately to CRS changes, and do not create concentration violations. A correctly operating OCP will produce routing weights that are proportional to CRS within the policy floor and ceiling, and will adjust those weights within the defined response window when CRS changes.</p>
+
+  <h3>Routing Weight Policy Constraints</h3>
+  <div class="threshold-row"><div class="th-label">Default routing weight floor</div><div class="th-value">10%</div><div class="th-note">No operator receives less than 10% of institutional routing unless in declared maintenance or degraded state</div></div>
+  <div class="threshold-row"><div class="th-label">Default routing weight ceiling</div><div class="th-value">60%</div><div class="th-note">No single operator receives more than 60% of institutional routing; concentration limit</div></div>
+  <div class="threshold-row"><div class="th-label">Maintenance window weight floor</div><div class="th-value">0%</div><div class="th-note">Operator in declared maintenance (<code>maintenanceDeclared: true</code>) may receive 0% routing weight</div></div>
+  <div class="threshold-row"><div class="th-label">Degraded state weight ceiling</div><div class="th-value">30%</div><div class="th-note">Operator with CRS below 70 (degraded threshold) is capped at 30% regardless of policy ceiling</div></div>
+  <div class="threshold-row"><div class="th-label">CRS change response window</div><div class="th-value">60 seconds</div><div class="th-note">Routing weight must reflect updated CRS within one scoring cycle of CRS change</div></div>
+  <div class="threshold-row"><div class="th-label">Concentration limit — cohort-wide</div><div class="th-value">≤ 2 operators</div><div class="th-note">No more than 2 operators from the same jurisdiction or infrastructure provider may each exceed 40% routing weight simultaneously</div></div>
+  <div class="threshold-row"><div class="th-label">Weight normalization requirement</div><div class="th-value">Sums to 100%</div><div class="th-note">Routing weights across all active operators for a given institution must sum to 100%</div></div>
+  <br>
+
+  <h3>Layer 3 Validation Procedure</h3>
+  <p>Layer 3 runs three specific checks against live routing weight data:</p>
+
+  <div class="validation-layer">
+    <div class="vl-header">
+      <span class="vl-name">Check R-01 — Policy Bounds Compliance</span>
+      <span class="vl-layer">Weight within floor and ceiling for operator state</span>
+    </div>
+    <div class="vl-body">
+      <p>For each routing weight assignment logged during the 4-hour observation window, verify the assigned weight is within the applicable floor and ceiling for this operator's current state. An operator with CRS above 70 must receive a weight between 10% and 60%. An operator with CRS below 70 must be capped at 30%. An operator with <code>maintenanceDeclared: true</code> may receive 0%.</p>
+      <p><strong>Pass:</strong> All weight assignments within policy bounds for operator state.</p>
+      <p><strong>Fail:</strong> <code>ERR_ROUTING_WEIGHT_POLICY_VIOLATION</code> — any assignment outside applicable bounds.</p>
+    </div>
+  </div>
+
+  <div class="validation-layer">
+    <div class="vl-header">
+      <span class="vl-name">Check R-02 — CRS Responsiveness</span>
+      <span class="vl-layer">Weight adjusts within 60 seconds of CRS change</span>
+    </div>
+    <div class="vl-body">
+      <p>During the observation window, identify any CRS change of 5 or more points in a single scoring cycle for any pilot operator. Confirm that the operator's routing weight is updated within the following 60-second cycle to reflect the new CRS. A weight that does not respond to a material CRS change within one cycle indicates the OCP's weight recalculation trigger is not functioning.</p>
+      <p><strong>Pass:</strong> Weight updated within 60 seconds of any CRS change ≥ 5 points.</p>
+      <p><strong>Fail:</strong> <code>ERR_ROUTING_WEIGHT_STALE</code> — weight not updated within one cycle of material CRS change.</p>
+    </div>
+  </div>
+
+  <div class="validation-layer">
+    <div class="vl-header">
+      <span class="vl-name">Check R-03 — Concentration Limit Enforcement</span>
+      <span class="vl-layer">No cohort-wide concentration violations produced</span>
+    </div>
+    <div class="vl-body">
+      <p>Verify that no routing weight assignment across the full pilot cohort produces a concentration limit violation: no more than 2 operators from the same jurisdiction or infrastructure provider exceeding 40% routing weight simultaneously. Also verify weights sum to 100% across all active operators per institution.</p>
+      <p><strong>Pass:</strong> No concentration violations detected; weights sum to 100%.</p>
+      <p><strong>Fail:</strong> <code>ERR_CONCENTRATION_LIMIT_BREACH</code> or <code>ERR_WEIGHT_NORMALIZATION_FAILURE</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 07 STEP 4 — PASS/FAIL CRITERIA -->
+<div class="section" id="step4">
+  <div class="section-number">Step 04</div>
+  <h2>Explicit Pass/Fail Criteria</h2>
+  <p>Validation produces a binary result per operator per layer. There are no partial passes. An operator who passes Layers 1 and 2 but fails Layer 3 has not passed validation. The complete operator validation result is PASS only if all three layers return PASS.</p>
+
+  <table class="spec-table">
+    <thead><tr><th>Layer</th><th>Check ID</th><th>Pass Condition</th><th>Fail Condition</th><th>Error Code</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Layer 1</strong></td><td>L1-01</td><td>OCP receiving telemetry from this operator</td><td>Zero payloads received in observation window</td><td><code>ERR_TELEMETRY_NOT_RECEIVED</code></td></tr>
+      <tr><td><strong>Layer 1</strong></td><td>L1-02</td><td>Delivery rate ≥ 98% over 4-hour window</td><td>Fewer than 470 of 480 expected polls received</td><td><code>ERR_TELEMETRY_DELIVERY_RATE_LOW</code></td></tr>
+      <tr><td><strong>Layer 1</strong></td><td>L1-03</td><td>No consecutive gap sequence exceeding 3 missed polls</td><td>Four or more consecutive missed polls detected</td><td><code>ERR_TELEMETRY_GAP</code></td></tr>
+      <tr><td><strong>Layer 1</strong></td><td>L1-04</td><td>100% of payloads pass schema validation</td><td>Any payload fails schema validation</td><td><code>ERR_SCHEMA_VALIDATION_FAILURE</code></td></tr>
+      <tr><td><strong>Layer 1</strong></td><td>L1-05</td><td>100% of payloads carry valid Ed25519 signature</td><td>Any payload has missing or invalid signature</td><td><code>ERR_SIGNATURE_INVALID</code></td></tr>
+      <tr><td><strong>Layer 1</strong></td><td>L1-06</td><td>All payload timestamps within ±5 seconds of OCP receipt</td><td>Any payload timestamp drift exceeds ±5 seconds</td><td><code>ERR_TIMESTAMP_DRIFT</code></td></tr>
+      <tr><td><strong>Layer 2</strong></td><td>L2-01</td><td>Raw CRS inputs retrievable for five consecutive cycles</td><td>OCP inputs unavailable for any cycle</td><td><code>ERR_VALIDATION_INPUT_UNAVAILABLE</code></td></tr>
+      <tr><td><strong>Layer 2</strong></td><td>L2-02</td><td>CRS delta ≤ 2 points on all five consecutive cycles</td><td>Delta > 2 points on any single cycle</td><td><code>ERR_CRS_CALCULATION_MISMATCH</code></td></tr>
+      <tr><td><strong>Layer 3</strong></td><td>L3-01</td><td>All weight assignments within policy bounds for operator state</td><td>Any assignment outside applicable floor/ceiling</td><td><code>ERR_ROUTING_WEIGHT_POLICY_VIOLATION</code></td></tr>
+      <tr><td><strong>Layer 3</strong></td><td>L3-02</td><td>Weight updated within 60 seconds of any CRS change ≥ 5 points</td><td>Weight not updated within one scoring cycle</td><td><code>ERR_ROUTING_WEIGHT_STALE</code></td></tr>
+      <tr><td><strong>Layer 3</strong></td><td>L3-03</td><td>No concentration violations; weights sum to 100%</td><td>Concentration breach or normalization failure</td><td><code>ERR_CONCENTRATION_LIMIT_BREACH</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <strong>Note on Layer 3 Failures</strong>
+    <p>Layer 3 failures are OCP configuration failures, not operator failures. An operator cannot fix a routing weight policy violation — the OCP's weight assignment logic must be corrected. Layer 3 failures therefore trigger an OCP configuration review rather than an operator remediation workflow. The affected operator's VALIDATED state is withheld until the OCP issue is resolved and Layer 3 is re-run.</p>
+  </div>
+</div>
+
+<!-- 08 STEP 5 — REMEDIATION -->
+<div class="section" id="step5">
+  <div class="section-number">Step 05</div>
+  <h2>Remediation Process for Failing Operators</h2>
+  <p>Remediation paths differ by failure layer because the root causes differ. Layer 1 failures are operator infrastructure failures. Layer 2 failures are OCP configuration failures. Layer 3 failures are OCP policy enforcement failures. An operator should not be required to take remediation action for a Layer 2 or Layer 3 failure — those require Superstructure operations or Post Fiat core to resolve the OCP configuration.</p>
+
+  <div class="remediation-track">
+    <div class="rt-header">
+      <span>Layer 1 Failure — Operator Telemetry Infrastructure</span>
+      <span class="rt-window">48-hour remediation window</span>
+    </div>
+    <div class="rt-body">
+      <p>Operator is responsible for resolving Layer 1 failures. Superstructure operations notifies the operator within 2 hours of failure detection with the specific check ID, failure detail, and error code. The operator must:</p>
+      <ul>
+        <li>Identify the root cause within 4 hours of notification</li>
+        <li>Submit a written remediation plan within 12 hours</li>
+        <li>Resolve and request retest within 48 hours of the original failure</li>
+      </ul>
+      <p>Retest runs a fresh 4-hour observation window. A passing retest clears Layer 1 and Layer 2 validation begins. A second consecutive Layer 1 failure after the 48-hour window triggers escalation per the M4(1) remediation framework.</p>
+    </div>
+  </div>
+
+  <div class="remediation-track">
+    <div class="rt-header">
+      <span>Layer 2 Failure — OCP CRS Calculation Configuration</span>
+      <span class="rt-window">24-hour resolution window</span>
+    </div>
+    <div class="rt-body">
+      <p>Superstructure operations owns the Layer 2 remediation. The operator is notified that validation is paused pending OCP investigation — no action required from the operator. Superstructure operations must:</p>
+      <ul>
+        <li>Identify the mismatch type (weight misconfiguration, field mapping error, or stale input) using the Layer 2 diagnostic procedure within 4 hours</li>
+        <li>Escalate to Post Fiat core if the error is in the OCP's core calculation logic rather than a configuration setting within 8 hours</li>
+        <li>Resolve and re-run Layer 2 validation within 24 hours</li>
+      </ul>
+      <p>A consistent mismatch pattern across multiple operators indicates a systemic OCP configuration error. In that case, all affected operators' validations are paused simultaneously and a single OCP fix resolves all pending Layer 2 checks.</p>
+    </div>
+  </div>
+
+  <div class="remediation-track">
+    <div class="rt-header">
+      <span>Layer 3 Failure — OCP Routing Weight Policy Enforcement</span>
+      <span class="rt-window">24-hour resolution window</span>
+    </div>
+    <div class="rt-body">
+      <p>Superstructure operations owns the Layer 3 remediation. Operator is notified that validation is paused pending OCP investigation. Remediation steps:</p>
+      <ul>
+        <li>Identify the specific policy enforcement failure (bounds violation, stale weight, concentration breach, or normalization failure) within 4 hours</li>
+        <li>Correct the OCP's weight assignment logic or policy configuration within 24 hours</li>
+        <li>Re-run Layer 3 validation with a fresh 4-hour observation window after the fix is deployed</li>
+      </ul>
+      <p>Concentration limit breaches affecting multiple operators are resolved by adjusting the OCP's cohort-wide weight allocation algorithm, not by penalizing any individual operator.</p>
+    </div>
+  </div>
+
+  <h3>Remediation Threshold Reference</h3>
+  <div class="threshold-row"><div class="th-label">Failure notification window</div><div class="th-value">2 hours</div><div class="th-note">Superstructure ops notifies relevant party (operator or ops team) of failure</div></div>
+  <div class="threshold-row"><div class="th-label">Layer 1 — root cause deadline</div><div class="th-value">4 hours</div><div class="th-note">Operator must identify root cause within 4 hours of failure notification</div></div>
+  <div class="threshold-row"><div class="th-label">Layer 1 — remediation window</div><div class="th-value">48 hours</div><div class="th-note">From original failure; one 48-hour extension available per M4(1) framework</div></div>
+  <div class="threshold-row"><div class="th-label">Layer 2/3 — diagnosis deadline</div><div class="th-value">4 hours</div><div class="th-note">Superstructure ops identifies mismatch type within 4 hours of failure detection</div></div>
+  <div class="threshold-row"><div class="th-label">Layer 2/3 — resolution window</div><div class="th-value">24 hours</div><div class="th-note">OCP configuration corrected and Layer 2/3 re-run within 24 hours</div></div>
+  <div class="threshold-row"><div class="th-label">Retest observation window</div><div class="th-value">4 hours</div><div class="th-note">All retest runs require a fresh 4-hour observation window regardless of layer</div></div>
+</div>
+
+<!-- 09 STATE MACHINE -->
+<div class="section" id="statemachine">
+  <div class="section-number">Section 09</div>
+  <h2>Validation State Machine</h2>
+  <table class="spec-table">
+    <thead><tr><th>From State</th><th>To State</th><th>Trigger</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td>—</td><td><strong>OBSERVATION</strong></td><td><code>OPERATOR_VALIDATION_INITIATED</code></td><td>4-hour observation window begins; OCP ingestion logging active for this operator</td></tr>
+      <tr><td>OBSERVATION</td><td><strong>LAYER_1_ASSESSMENT</strong></td><td><code>OBSERVATION_WINDOW_COMPLETE</code></td><td>Layer 1 checks L1-01 through L1-06 run against 4-hour ingestion data</td></tr>
+      <tr><td>LAYER_1_ASSESSMENT</td><td><strong>LAYER_2_ASSESSMENT</strong></td><td><code>LAYER_1_PASSED</code></td><td>Five consecutive CRS scoring cycles retrieved; independent recalculation begins</td></tr>
+      <tr><td>LAYER_1_ASSESSMENT</td><td><strong>L1_REMEDIATION</strong></td><td><code>LAYER_1_FAILED</code></td><td>Operator notified within 2 hours; 48-hour remediation window opens</td></tr>
+      <tr><td>L1_REMEDIATION</td><td><strong>OBSERVATION</strong></td><td><code>OPERATOR_RETEST_REQUESTED</code></td><td>Fresh 4-hour observation window begins</td></tr>
+      <tr><td>LAYER_2_ASSESSMENT</td><td><strong>LAYER_3_ASSESSMENT</strong></td><td><code>LAYER_2_PASSED</code></td><td>Layer 3 checks R-01 through R-03 run against live routing weight log</td></tr>
+      <tr><td>LAYER_2_ASSESSMENT</td><td><strong>OCP_INVESTIGATION</strong></td><td><code>LAYER_2_FAILED</code></td><td>Superstructure ops begins mismatch diagnosis; operator notified of pause</td></tr>
+      <tr><td>OCP_INVESTIGATION</td><td><strong>LAYER_2_ASSESSMENT</strong></td><td><code>OCP_CONFIG_FIXED</code></td><td>Fresh 5-cycle CRS comparison run after OCP fix deployed</td></tr>
+      <tr><td>LAYER_3_ASSESSMENT</td><td><strong>VALIDATED</strong></td><td><code>LAYER_3_PASSED</code></td><td><code>OPERATOR_TELEMETRY_VALIDATION_COMPLETE</code> fires; operator enters VALIDATED state</td></tr>
+      <tr><td>LAYER_3_ASSESSMENT</td><td><strong>OCP_INVESTIGATION</strong></td><td><code>LAYER_3_FAILED</code></td><td>Superstructure ops investigates weight policy enforcement; operator notified of pause</td></tr>
+      <tr><td>L1_REMEDIATION</td><td><strong>DEFERRED</strong></td><td><code>OPERATOR_VALIDATION_DEFERRED</code></td><td>Second consecutive Layer 1 failure; escalation per M4(1) deferral framework</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 10 ERRORS -->
+<div class="section" id="errors">
+  <div class="section-number">Section 10</div>
+  <h2>Error Codes and Typed Failure Reasons</h2>
+  <div class="error-grid">
+    <div class="error-card">
+      <div class="e-code">ERR_TELEMETRY_NOT_RECEIVED</div>
+      <div class="e-name">Layer 1 — L1-01 Fail</div>
+      <p>Zero telemetry payloads received from this operator during observation window. Operator infrastructure is either offline or misconfigured. Immediate block.</p>
+    </div>
+    <div class="error-card">
+      <div class="e-code">ERR_TELEMETRY_DELIVERY_RATE_LOW</div>
+      <div class="e-name">Layer 1 — L1-02 Fail</div>
+      <p>Delivery rate below 98% during 4-hour window. Actual delivery rate and poll count logged for operator diagnosis.</p>
+    </div>
+    <div class="error-card">
+      <div class="e-code">ERR_TELEMETRY_GAP</div>
+      <div class="e-name">Layer 1 — L1-03 Fail</div>
+      <p>Four or more consecutive missed polls detected. Gap start and end timestamps logged. Indicates periodic outage pattern rather than steady-state delivery degradation.</p>
+    </div>
+    <div class="error-card">
+      <div class="e-code">ERR_SCHEMA_VALIDATION_FAILURE</div>
+      <div class="e-name">Layer 1 — L1-04 Fail</div>
+      <p>One or more payloads failed schema validation. Specific missing or malformed fields logged per payload for operator diagnosis.</p>
+    </div>
+    <div class="error-card">
+      <div class="e-code">ERR_SIGNATURE_INVALID</div>
+      <div class="e-name">Layer 1 — L1-05 Fail</div>
+      <p>One or more payloads had missing or invalid Ed25519 telemetrySignature. Indicates signing infrastructure misconfiguration.</p>
+    </div>
+    <div class="error-card">
+      <div class="e-code">ERR_TIMESTAMP_DRIFT</div>
+      <div class="e-name">Layer 1 — L1-06 Fail</div>
+      <p>Payload timestamp more than ±5 seconds from OCP receipt time. Indicates clock synchronization issue on operator infrastructure. Affects freshness score accuracy.</p>
+    </div>
+    <div class="error-card">
+      <div class="e-code">ERR_VALIDATION_INPUT_UNAVAILABLE</div>
+      <div class="e-name">Layer 2 — L2-01 Fail</div>
+      <p>OCP CRS inputs not retrievable for one or more of the five required scoring cycles. Blocks independent recalculation. Escalates to Superstructure operations review.</p>
+    </div>
+    <div class="error-card">
+      <div class="e-code">ERR_CRS_CALCULATION_MISMATCH</div>
+      <div class="e-name">Layer 2 — L2-02 Fail</div>
+      <p>Delta between OCP CRS output and independent calculation exceeds 2 points on any cycle. Mismatch type (weight, field mapping, stale input) logged from diagnostic step. OCP configuration failure — not operator failure.</p>
+    </div>
+    <div class="error-card">
+      <div class="e-code">ERR_ROUTING_WEIGHT_POLICY_VIOLATION</div>
+      <div class="e-name">Layer 3 — L3-01 Fail</div>
+      <p>Routing weight assignment outside applicable floor/ceiling for operator's current state. Specific violation (above ceiling, below floor, degraded cap exceeded) logged. OCP configuration failure.</p>
+    </div>
+    <div class="error-card">
+      <div class="e-code">ERR_ROUTING_WEIGHT_STALE</div>
+      <div class="e-name">Layer 3 — L3-02 Fail</div>
+      <p>Routing weight not updated within 60 seconds of a CRS change of 5 or more points. OCP weight recalculation trigger not functioning. OCP configuration failure.</p>
+    </div>
+    <div class="error-card">
+      <div class="e-code">ERR_CONCENTRATION_LIMIT_BREACH</div>
+      <div class="e-name">Layer 3 — L3-03 Fail</div>
+      <p>More than 2 operators from same jurisdiction or infrastructure provider exceeding 40% routing weight simultaneously. OCP cohort-wide allocation algorithm failure.</p>
+    </div>
+    <div class="error-card">
+      <div class="e-code">ERR_WEIGHT_NORMALIZATION_FAILURE</div>
+      <div class="e-name">Layer 3 — L3-03 Fail</div>
+      <p>Routing weights across active operators do not sum to 100% for one or more institutions. OCP normalization step not executing correctly after weight updates.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 11 SCHEMAS -->
+<div class="section" id="schemas">
+  <div class="section-number">Section 11</div>
+  <h2>Validation Record Schemas</h2>
+
+  <h3>Operator Telemetry Validation Record</h3>
+  <div class="schema-block">
+    <span class="sb">{</span><br>
+    &nbsp;&nbsp;<span class="sf">"validationId"</span>: <span class="st">string</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sc">// unique validation cycle identifier</span><br>
+    &nbsp;&nbsp;<span class="sf">"operatorId"</span>: <span class="st">string</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sc">// operator identifier from founding cohort registry</span><br>
+    &nbsp;&nbsp;<span class="sf">"validationState"</span>: <span class="st">string</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sc">// OBSERVATION | LAYER_1_ASSESSMENT | LAYER_2_ASSESSMENT | LAYER_3_ASSESSMENT | VALIDATED | L1_REMEDIATION | OCP_INVESTIGATION | DEFERRED</span><br>
+    &nbsp;&nbsp;<span class="sf">"observationStartedAt"</span>: <span class="st">string</span>,&nbsp;&nbsp;&nbsp;<span class="sc">// ISO 8601 UTC; observation window start</span><br>
+    &nbsp;&nbsp;<span class="sf">"observationCompletedAt"</span>: <span class="st">string | null</span>,<span class="sc">// ISO 8601 UTC; populated when window closes</span><br>
+    &nbsp;&nbsp;<span class="sf">"layer1Result"</span>: <span class="st">LayerResult | null</span>,<span class="sc">// null until Layer 1 assessed</span><br>
+    &nbsp;&nbsp;<span class="sf">"layer2Result"</span>: <span class="st">LayerResult | null</span>,<span class="sc">// null until Layer 2 assessed</span><br>
+    &nbsp;&nbsp;<span class="sf">"layer3Result"</span>: <span class="st">LayerResult | null</span>,<span class="sc">// null until Layer 3 assessed</span><br>
+    &nbsp;&nbsp;<span class="sf">"validatedAt"</span>: <span class="st">string | null</span>,&nbsp;&nbsp;&nbsp;&nbsp;<span class="sc">// ISO 8601 UTC; populated when VALIDATED state reached</span><br>
+    &nbsp;&nbsp;<span class="sf">"activeRemediations"</span>: <span class="st">array</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sc">// open remediation records</span><br>
+    <span class="sb">}</span>
+  </div>
+
+  <h3>Layer Result Object</h3>
+  <div class="schema-block">
+    <span class="sb">{</span><br>
+    &nbsp;&nbsp;<span class="sf">"layer"</span>: <span class="st">number</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sc">// 1, 2, or 3</span><br>
+    &nbsp;&nbsp;<span class="sf">"result"</span>: <span class="st">string</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sc">// "PASS" | "FAIL" | "PENDING"</span><br>
+    &nbsp;&nbsp;<span class="sf">"checkResults"</span>: <span class="st">array</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sc">// individual check results (L1-01 through L3-03)</span><br>
+    &nbsp;&nbsp;<span class="sf">"assessedAt"</span>: <span class="st">string</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sc">// ISO 8601 UTC</span><br>
+    &nbsp;&nbsp;<span class="sf">"failureOwner"</span>: <span class="st">string | null</span>,&nbsp;&nbsp;<span class="sc">// "OPERATOR" (Layer 1) | "OCP" (Layer 2/3) | null on pass</span><br>
+    &nbsp;&nbsp;<span class="sf">"errorCodes"</span>: <span class="st">array</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sc">// ERR_* codes for all failed checks; empty on pass</span><br>
+    &nbsp;&nbsp;<span class="sf">"crsComparisonLog"</span>: <span class="st">array | null</span>&nbsp;<span class="sc">// Layer 2 only: array of {cycle, ocpScore, independentScore, delta} per cycle</span><br>
+    <span class="sb">}</span>
+  </div>
+</div>
+
+<!-- 12 EVENTS -->
+<div class="section" id="events">
+  <div class="section-number">Section 12</div>
+  <h2>Validation Event Registry</h2>
+  <ul class="event-list">
+    <li><span class="event-tag">OPERATOR_VALIDATION_INITIATED</span> Validation cycle begins for this operator; 4-hour observation window starts</li>
+    <li><span class="event-tag">OBSERVATION_WINDOW_COMPLETE</span> 4-hour window ends; Layer 1 assessment begins against collected ingestion data</li>
+    <li><span class="event-tag">LAYER_1_PASSED</span> All Layer 1 checks pass; Layer 2 CRS validation begins</li>
+    <li><span class="event-tag">LAYER_1_FAILED</span> One or more Layer 1 checks fail; operator notified; remediation window opens</li>
+    <li><span class="event-tag">LAYER_2_PASSED</span> CRS delta within tolerance across all five cycles; Layer 3 routing weight validation begins</li>
+    <li><span class="event-tag">LAYER_2_FAILED</span> CRS delta exceeds tolerance on one or more cycles; OCP investigation begins; operator notified of pause</li>
+    <li><span class="event-tag">LAYER_3_PASSED</span> All routing weight checks pass; operator enters VALIDATED state</li>
+    <li><span class="event-tag">LAYER_3_FAILED</span> One or more routing weight checks fail; OCP investigation begins; operator notified of pause</li>
+    <li><span class="event-tag">OPERATOR_TELEMETRY_VALIDATION_COMPLETE</span> All three layers passed; operator VALIDATED; institutional routing decisions trusted as OCP-verified</li>
+    <li><span class="event-tag">OPERATOR_RETEST_REQUESTED</span> Operator requests Layer 1 retest after resolving failure; fresh 4-hour window begins</li>
+    <li><span class="event-tag">OCP_CONFIG_FIXED</span> Superstructure ops deploys OCP fix for Layer 2 or Layer 3 failure; affected layer re-assessment begins</li>
+    <li><span class="event-tag">OPERATOR_VALIDATION_DEFERRED</span> Second consecutive Layer 1 failure; operator exits current validation cycle per M4(1) deferral framework</li>
+    <li><span class="event-tag err">ERR_CRS_CALCULATION_MISMATCH</span> Layer 2 failure — OCP score diverges from independent calculation by more than 2 points</li>
+    <li><span class="event-tag err">ERR_ROUTING_WEIGHT_POLICY_VIOLATION</span> Layer 3 failure — weight assignment outside applicable policy bounds</li>
+    <li><span class="event-tag err">ERR_CONCENTRATION_LIMIT_BREACH</span> Layer 3 failure — cohort-wide concentration limit violated by OCP weight allocation</li>
+  </ul>
+</div>
+
+<!-- 13 VERIFICATION -->
+<div class="section" id="verification">
+  <div class="section-number">Section 13</div>
+  <h2>Completion Verification</h2>
+  <table class="spec-table">
+    <thead><tr><th>Required Step</th><th>Addressed In</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Define telemetry ingestion requirements for the OCP using live operator data</td><td>Section 04 — Layer 1 with 6 checks, 8 thresholds including 4-hour window, 98% delivery rate, ±5s timestamp drift, OCP ingestion latency ceiling; full field mapping table with required ranges and plausibility flags</td><td class="score-complete">✓ Complete</td></tr>
+      <tr><td>Map CRS calculation logic to specific telemetry data points</td><td>Section 05 — Published CRS formula; four component cards mapping source fields to scoring inputs; explicit transformation formulas for latency score and freshness score; 5-cycle comparison procedure with delta tolerance; 8 thresholds</td><td class="score-complete">✓ Complete</td></tr>
+      <tr><td>Establish routing weight adjustment mechanism based on live scoring</td><td>Section 06 — Layer 3 with 3 validation checks; 7 policy thresholds including floor, ceiling, degraded cap, 60-second response window, and concentration limits; weight normalization requirement</td><td class="score-complete">✓ Complete</td></tr>
+      <tr><td>Define explicit pass/fail criteria for the validation phase</td><td>Section 07 — 11-row pass/fail table covering all checks across all three layers; binary pass/fail per check; explicit error code per failure condition; OCP vs operator failure ownership clarified</td><td class="score-complete">✓ Complete</td></tr>
+      <tr><td>Outline remediation process for operators failing telemetry validation</td><td>Section 08 — Three remediation tracks differentiated by failure owner (operator vs OCP); Layer 1 48-hour window with 4-hour root cause deadline; Layer 2/3 24-hour OCP resolution window; 6 remediation thresholds; retest procedure</td><td class="score-complete">✓ Complete</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 14 CHANGELOG -->
+<div class="section" id="changelog">
+  <div class="section-number">Section 14</div>
+  <h2>Change Log</h2>
+  <div class="changelog-row">
+    <div class="cl-ver">v1.0</div>
+    <div class="cl-date">March 2026</div>
+    <div class="cl-note">Initial publication. Three-layer sequential validation model covering OCP telemetry ingestion (6 checks, 8 thresholds, 4-hour live observation window), CRS calculation correctness (independent 5-cycle recalculation, 2-point delta tolerance, explicit component transformation formulas for latency and freshness), and routing weight policy compliance (3 checks covering policy bounds, CRS responsiveness, and concentration limits). Differentiated remediation tracks by failure owner — operator-owned Layer 1 failures (48h window) vs OCP-owned Layer 2/3 failures (24h window). 12 typed error codes, 2 schema definitions, 15 validation events. Assumption registry with 1 open item pending Post Fiat core confirmation on OCP query endpoint availability.</div>
+  </div>
+</div>
+
+</div>
+<div class="footer-bar">Superstructure M4(2) · Live Telemetry and Monitoring Validation · Version 1.0 · Post Fiat Network</div>
+</body>
+</html>
